@@ -1,0 +1,252 @@
+:root {
+    --deep: #0a3b7a;
+    --accent: #37b34a;
+    --accent2: #78d96b;
+    --muted: #6b7280;
+    --card: #ffffff;
+    --shadow: 0 18px 40px rgba(2, 16, 40, .08);
+}
+
+.adm {
+    padding: 12px 16px 40px;
+}
+
+/* ========== HERO ========== */
+.adm-hero {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    gap: 18px;
+    background: linear-gradient(90deg, #eaf3ff 0%, #f5faff 100%);
+    border: 1px solid #e5eefb;
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    padding: 22px;
+}
+
+.hero-copy {
+    padding: 8px 6px;
+}
+
+.eyebrow {
+    text-transform: uppercase;
+    letter-spacing: .18em;
+    font-weight: 800;
+    color: var(--deep);
+    opacity: .8;
+}
+
+.adm-hero h1 {
+    margin: 6px 0 8px;
+    font-size: clamp(22px, 3.2vw, 32px);
+}
+
+.adm-hero p {
+    color: #334155;
+    margin: 0 0 12px;
+    max-width: 520px;
+}
+
+.hero-actions {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.btn {
+    height: 38px;
+    border-radius: 10px;
+    padding: 0 14px;
+    display: inline-flex;
+    align-items: center;
+    font-weight: 800;
+    cursor: pointer;
+    border: 0;
+}
+
+.btn.primary {
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    color: #fff;
+    box-shadow: 0 10px 22px rgba(55, 179, 74, .25);
+}
+
+.btn.ghost {
+    background: #eef4ff;
+    color: var(--deep);
+}
+
+.btn.link {
+    background: #0a58ca;
+    color: #fff;
+}
+
+.chips {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.chip {
+    background: #fff;
+    border: 1px solid #e6eefb;
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-size: 12.5px;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, .04);
+}
+
+.hero-art {
+    position: relative;
+}
+
+.art {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+/* ========== KPI ========== */
+.adm-kpis {
+    display: grid;
+    gap: 10px;
+    grid-template-columns: repeat(4, minmax(180px, 1fr));
+    margin-top: 16px;
+}
+
+.kpi {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    padding: 12px;
+    box-shadow: var(--shadow);
+}
+
+.kpi-value {
+    font-size: 22px;
+    font-weight: 800;
+}
+
+.kpi-label {
+    color: var(--muted);
+    margin-top: 2px;
+}
+
+/* ========== MODULE CARDS ========== */
+.adm-mods {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(200px, 1fr));
+    gap: 12px;
+    margin-top: 14px;
+}
+
+.mod {
+    position: relative;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    padding: 14px;
+    box-shadow: var(--shadow);
+}
+
+.mod:hover {
+    transform: translateY(-2px);
+    transition: .2s;
+}
+
+.mod-tag {
+    position: absolute;
+    right: 10px;
+    top: 10px;
+    background: #eef2ff;
+    border: 1px solid #e5e7eb;
+    padding: 4px 8px;
+    border-radius: 999px;
+    font-size: 12px;
+}
+
+.mod-title {
+    margin: 6px 0 6px;
+}
+
+.mod-desc {
+    color: #374151;
+    min-height: 56px;
+}
+
+/* ========== NOTICES/ACTIVITY ========== */
+.adm-bottom {
+    margin-top: 14px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    padding: 14px;
+    box-shadow: var(--shadow);
+}
+
+.card-title {
+    font-weight: 800;
+    margin-bottom: 8px;
+}
+
+.list {
+    margin: 0;
+    padding: 0 0 0 18px;
+    display: grid;
+    gap: 6px;
+}
+
+.timeline {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 8px;
+}
+
+.timeline .dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    background: #cbd5e1;
+    margin-right: 8px;
+}
+
+.timeline .dot.ok {
+    background: #37b34a;
+}
+
+.timeline .dot.warn {
+    background: #f59e0b;
+}
+
+@media (max-width: 1100px) {
+    .adm-hero {
+        grid-template-columns: 1fr;
+    }
+
+    .adm-mods {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .adm-bottom {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 640px) {
+    .adm-kpis {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .adm-mods {
+        grid-template-columns: 1fr;
+    }
+}

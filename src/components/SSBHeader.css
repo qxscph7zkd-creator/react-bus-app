@@ -1,0 +1,252 @@
+:root {
+    --ssb-blue: #0b3b7a;
+    /* xanh thương hiệu (đã dùng ở footer) */
+    --ssb-blue-2: #0a356f;
+    /* xanh đậm hơn một chút */
+    --ink: #0b1220;
+    --muted: #9fb2d6;
+    --pill: #ffffff1a;
+    --line: #ffffff26;
+    --shadow: 0 8px 24px rgba(2, 16, 40, .25);
+}
+
+.ssbh {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+}
+
+/* dải promo mảnh */
+.ssbh-top {
+    background: #062a55;
+    color: #cfe3ff;
+    font-size: 12.5px;
+}
+
+.ssbh-top .inner {
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: 6px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.ssbh-top .more {
+    color: #8ae3a2;
+    text-decoration: underline;
+}
+
+/* thanh bar chính */
+.ssbh-bar {
+    background: linear-gradient(180deg, var(--ssb-blue) 0%, var(--ssb-blue-2) 100%);
+    box-shadow: var(--shadow);
+}
+
+.ssbh-bar .inner {
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: 10px 16px;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 16px;
+    align-items: center;
+}
+
+/* brand */
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #fff;
+    text-decoration: none;
+}
+
+.brand-text {
+    font-weight: 900;
+    letter-spacing: .02em;
+    font-size: 18px;
+}
+
+/* nav desktop */
+.nav {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.nav-item {
+    color: #e7f0ff;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 14.5px;
+    padding: 10px 14px;
+    border-radius: 14px;
+    border: 1px solid transparent;
+    transition: .15s ease;
+}
+
+.nav-item:hover {
+    background: var(--pill);
+    border-color: var(--line);
+}
+
+.nav-item.active {
+    color: #fff;
+    background: var(--pill);
+    border-color: var(--line);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .05);
+}
+
+/* tools (search + bell + role + avatar) */
+.tools {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 280px;
+    background: #fff;
+    border-radius: 999px;
+    padding: 6px 12px;
+}
+
+.search input {
+    border: 0;
+    outline: 0;
+    width: 100%;
+    font-size: 14.5px;
+}
+
+.icon-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
+    border: 1px solid var(--line);
+    background: var(--pill);
+    color: #fff;
+    display: grid;
+    place-items: center;
+}
+
+.role {
+    height: 36px;
+    border-radius: 12px;
+    border: 1px solid var(--line);
+    background: var(--pill);
+    color: #fff;
+    padding: 0 10px;
+    font-weight: 700;
+}
+
+.avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 999px;
+    background: #fff;
+    color: var(--ssb-blue);
+    font-weight: 900;
+    display: grid;
+    place-items: center;
+}
+
+/* hamburger chỉ hiện ở mobile */
+.hamburger {
+    display: none;
+    background: transparent;
+    border: 0;
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
+}
+
+.hamburger span {
+    display: block;
+    height: 2px;
+    background: #fff;
+    margin: 7px 8px;
+}
+
+/* panel mobile */
+.panel {
+    position: fixed;
+    inset: 0;
+    background: rgba(2, 16, 40, .45);
+    opacity: 0;
+    pointer-events: none;
+    transition: .2s;
+}
+
+.panel.open {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.sheet {
+    position: absolute;
+    inset: auto 0 0 0;
+    background: #fff;
+    border-radius: 16px 16px 0 0;
+    padding: 14px;
+    transform: translateY(12px);
+    transition: .2s;
+}
+
+.panel.open .sheet {
+    transform: translateY(0);
+}
+
+.panel-search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #f3f6fb;
+    border: 1px solid #e6edf8;
+    border-radius: 12px;
+    padding: 8px 12px;
+    margin-bottom: 10px;
+}
+
+.panel-search input {
+    flex: 1;
+    border: 0;
+    outline: 0;
+    background: transparent;
+}
+
+.panel-links {
+    display: grid;
+    gap: 8px;
+}
+
+.panel-link {
+    padding: 12px;
+    border-radius: 12px;
+    border: 1px solid #e6edf8;
+    text-decoration: none;
+    color: #0b1220;
+}
+
+.panel-link:hover {
+    background: #f7faff;
+}
+
+/* responsive */
+@media (max-width: 980px) {
+    .nav {
+        display: none;
+    }
+
+    .hamburger {
+        display: block;
+    }
+
+    .search {
+        min-width: 200px;
+    }
+}

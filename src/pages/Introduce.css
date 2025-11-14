@@ -1,0 +1,168 @@
+:root {
+    --brand: #0b3b7a;
+    --panel: #0e3f7a;
+    --panel2: #0b376b;
+    --line: #e8eef7;
+    --muted: #6b7280;
+}
+
+/* Hero */
+.intro-hero {
+    padding: 28px 18px 10px;
+    margin: 12px 16px;
+    border-radius: 16px;
+    background: linear-gradient(180deg, #0b3b7a 0%, #082f60 100%);
+    color: #fff;
+}
+
+.intro-hero .eyebrow {
+    text-transform: uppercase;
+    letter-spacing: .18em;
+    opacity: .9;
+    font-weight: 800;
+}
+
+.intro-hero h1 {
+    margin: 6px 0 4px;
+    font-size: 28px;
+}
+
+/* Lợi ích */
+.intro-feats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin: 10px 16px;
+}
+
+.feat {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 12px;
+    display: flex;
+    gap: 10px;
+}
+
+.feat-title {
+    font-weight: 800;
+}
+
+.feat-desc {
+    color: var(--muted);
+}
+
+/* Khối giống footer */
+.intro-panel {
+    margin: 10px 16px 22px;
+    border-radius: 16px;
+    padding: 16px;
+    background: linear-gradient(180deg, var(--panel) 0%, var(--panel2) 100%);
+    color: #e9f2ff;
+    display: grid;
+    grid-template-columns: 1.1fr 1fr 1fr;
+    gap: 14px;
+}
+
+.brand {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: 6px;
+}
+
+.links {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: 6px;
+}
+
+.links a {
+    color: #cfe3ff;
+    text-decoration: underline;
+}
+
+.feedback {
+    display: flex;
+    gap: 8px;
+    margin: 6px 0 8px;
+}
+
+.feedback input {
+    flex: 1;
+    height: 38px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, .25);
+    background: rgba(255, 255, 255, .1);
+    color: #fff;
+    padding: 0 10px;
+}
+
+.feedback button {
+    height: 38px;
+    padding: 0 14px;
+    border-radius: 10px;
+    border: 0;
+    background: #3aa657;
+    color: #fff;
+    font-weight: 800;
+}
+
+.dots {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 999px;
+    display: inline-block;
+}
+
+.d1 {
+    background: #2563eb;
+}
+
+.d2 {
+    background: #ef4444;
+}
+
+.d3 {
+    background: #0ea5e9;
+}
+
+.d4 {
+    background: #111827;
+}
+
+@media (max-width:1024px) {
+    .intro-feats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .intro-panel {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width:640px) {
+    .intro-feats {
+        grid-template-columns: 1fr;
+    }
+
+    .intro-panel {
+        grid-template-columns: 1fr;
+    }
+}

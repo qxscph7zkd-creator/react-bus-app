@@ -1,0 +1,263 @@
+.report {
+    padding: 12px 16px 40px;
+}
+
+/* Toolbar */
+.toolbar {
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+}
+
+.group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.group label {
+    font-size: 12px;
+    color: #6b7280;
+}
+
+.group select,
+.group input[type="date"] {
+    height: 34px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 0 10px;
+    outline: none;
+    background: #fff;
+}
+
+.grow {
+    flex: 1;
+}
+
+.search {
+    height: 34px;
+    min-width: 260px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 0 10px;
+    outline: none;
+}
+
+.btn {
+    height: 34px;
+    padding: 0 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background: #fff;
+    cursor: pointer;
+    font-weight: 700;
+}
+
+.btn.primary {
+    background: #0a58ca;
+    color: #fff;
+    border-color: #0a58ca;
+}
+
+.btn:hover {
+    filter: brightness(0.98);
+}
+
+.btn.primary:hover {
+    filter: brightness(1.05);
+}
+
+/* KPI cards */
+.kpis {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(140px, 1fr));
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.kpi {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 10px 12px;
+}
+
+.kpi-title {
+    font-size: 12px;
+    color: #6b7280;
+}
+
+.kpi-value {
+    font-size: 20px;
+    font-weight: 800;
+    margin-top: 4px;
+}
+
+/* Sections */
+.section {
+    margin-top: 14px;
+}
+
+.section-title {
+    font-weight: 800;
+    margin-bottom: 8px;
+}
+
+.grid2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+@media (max-width: 1024px) {
+    .kpis {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .grid2 {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Route summary */
+.routes-summary {
+    display: grid;
+    gap: 10px;
+}
+
+.route-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 10px 12px;
+}
+
+.route-card.warn {
+    border-color: #fde68a;
+    background: #fffbeb;
+}
+
+.route-title {
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.progress {
+    position: relative;
+    height: 10px;
+    background: #f1f5f9;
+    border-radius: 999px;
+    flex: 1;
+    overflow: hidden;
+}
+
+.progress .bar {
+    height: 100%;
+    background: linear-gradient(90deg, #37b34a, #78d96b);
+    border-radius: 999px;
+}
+
+.stat {
+    min-width: 72px;
+    text-align: right;
+    font-weight: 700;
+}
+
+.meta {
+    margin-top: 6px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    color: #6b7280;
+    font-size: 12.5px;
+}
+
+.meta b {
+    color: #111;
+}
+
+/* Tables */
+.table-wrap {
+    overflow: auto;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+}
+
+.tbl {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.tbl th,
+.tbl td {
+    padding: 10px 12px;
+    border-bottom: 1px solid #eee;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.tbl thead th {
+    background: #f3f6ff;
+    font-weight: 700;
+}
+
+.tbl tbody tr:hover {
+    background: #f9fafb;
+}
+
+.row-warn {
+    background: #fff7ed;
+}
+
+.tel {
+    color: #0a58ca;
+    text-decoration: none;
+}
+
+.tel:hover {
+    text-decoration: underline;
+}
+
+.empty {
+    text-align: center;
+    color: #6b7280;
+    padding: 16px;
+}
+
+/* Driver perf */
+.badge {
+    padding: 4px 8px;
+    border-radius: 999px;
+    font-weight: 800;
+    font-size: 12px;
+}
+
+.badge.ok {
+    background: #e6f7e9;
+    color: #15803d;
+}
+
+.badge.mid {
+    background: #e0f2ff;
+    color: #075985;
+}
+
+.badge.low {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.hint {
+    font-size: 12.5px;
+    color: #6b7280;
+    margin-top: 8px;
+}
