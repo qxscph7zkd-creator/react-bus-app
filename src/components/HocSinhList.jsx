@@ -1,34 +1,6 @@
 import { useMemo, useState } from "react";
 import "./HocSinhList.css";
-
-/** ------------------ Mock data demo ------------------
- * Thay bằng dữ liệu thật hoặc import từ src/data/seed.js:
- *   import { students as RAW } from "../data/seed";
- */
-const LAST = [
-  "Nguyễn", "Trần", "Lê", "Phan", "Phạm", "Võ", "Vũ", "Đỗ", "Bùi", "Dương", "Huỳnh", "Đinh"
-];
-const MID = [
-  "Minh", "Gia", "Hoàng", "Ngọc", "Khánh", "Thanh", "Hải", "Anh", "Tuấn", "Thịnh", "Bảo", "Mai", "Lan", "Huyền"
-];
-const FIRST = [
-  "An", "Bảo", "Khánh", "Hân", "Huy", "Khang", "Trúc", "Tiên", "Tâm", "Tú", "Quân", "Quỳnh", "Tài", "Phong", "Hậu", "Duy", "Hảo", "Vy"
-];
-
-function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
-function makeName() {
-  // 50% nam/50% nữ, pha trộn tên lót
-  return `${pick(LAST)} ${Math.random() < .5 ? "Văn" : "Thị"} ${pick(MID)} ${pick(FIRST)}`.replace(/\s+/g, " ").trim();
-}
-const CLASSES = ["1A", "2B", "3C", "4C", "5A", "5B", "5C", "6A", "6B", "7A", "8A", "9C"];
-const ROUTES = ["Tuyến 1", "Tuyến 2", "Tuyến 3", "Tuyến 4", "Tuyến 5"];
-
-const RAW = Array.from({ length: 120 }, (_, i) => ({
-  id: `HS${String(i + 1).padStart(3, "0")}`,
-  name: makeName(),
-  class: CLASSES[i % CLASSES.length],
-  route: ROUTES[i % ROUTES.length],
-}));
+import { students as RAW } from "../data/seed";
 
 /** --------------------------------------------------- */
 
@@ -153,7 +125,7 @@ export default function HocSinhList() {
                   </div>
                 </td>
                 <td><span className="chip">{s.class}</span></td>
-                <td><span className="chip route">{s.route}</span></td>
+                <td><span className="chip route">{s.route.split(" - ")[0]}</span></td>
               </tr>
             ))}
             {paged.length === 0 && (

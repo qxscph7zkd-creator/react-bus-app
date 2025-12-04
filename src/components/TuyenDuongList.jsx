@@ -316,64 +316,109 @@ const getTrafficAdjustedDuration = (baseDuration) => {
 // Component để tìm và hiển thị các trạm xe buýt
 const BusStops = ({ routePolyline, isVisible }) => {
     const [busStops, setBusStops] = useState([]);
-  
+    const [status, setStatus] = useState('idle'); // 'idle', 'loading', 'success', 'error'
+    const [retryId, setRetryId] = useState(0); 
+
     useEffect(() => {
-      if (!isVisible || !routePolyline || routePolyline.length < 2) {
-        setBusStops([]);
-        return;
-      }
-  
-      const controller = new AbortController();
-      const signal = controller.signal;
-  
-      // Để tránh URL quá dài, ta lấy mẫu một số điểm trên tuyến đường
-      const simplifiedPolyline = routePolyline.filter((_, i) => i % 10 === 0);
-      if (routePolyline.length > 1 && (routePolyline.length - 1) % 10 !== 0) {
-        simplifiedPolyline.push(routePolyline[routePolyline.length-1]);
-      }
-      const waypoints = simplifiedPolyline.map(p => `${p[0]},${p[1]}`).join(',');
-  
-      // Query Overpass API để tìm trạm xe buýt gần các điểm đã chọn
-      const query = `
-        [out:json][timeout:30];
-        (
-          node(around:50, ${waypoints})["highway"="bus_stop"];
-          way(around:50, ${waypoints})["highway"="bus_stop"];
-          node(around:50, ${waypoints})["public_transport"="platform"]["bus"="yes"];
-          way(around:50, ${waypoints})["public_transport"="platform"]["bus"="yes"];
-        );
-        out center;
-      `;
-  
-      const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`;
-  
-      fetch(url, { signal })
-        .then(response => response.json())
-        .then(data => {
-            const stops = data.elements.map(el => {
-                const pos = el.type === 'node' ? [el.lat, el.lon] : [el.center.lat, el.center.lon];
-                return {
-                  id: el.id,
-                  position: pos,
-                  tags: el.tags,
-                };
-              });
-              // Lọc các trạm trùng lặp
-              const uniqueStops = Array.from(new Map(stops.map(s => [s.id, s])).values());
-              setBusStops(uniqueStops);
-        })
-        .catch(error => {
-          if (error.name !== 'AbortError') {
-            console.error("Lỗi khi fetch trạm xe buýt từ Overpass API:", error);
-          }
-        });
-  
-      return () => {
-        controller.abort();
-      };
-    }, [routePolyline, isVisible]);
-  
+        // Function to fetch data, allows us to call it directly and via retry
+        const fetchData = () => {
+            if (!isVisible || !routePolyline || routePolyline.length < 2) {
+                setBusStops([]);
+                setStatus('idle');
+                return;
+            }
+            
+            setStatus('loading');
+            const controller = new AbortController();
+            const signal = controller.signal;
+    
+            const simplifiedPolyline = routePolyline.filter((_, i) => i % 10 === 0);
+            if (routePolyline.length > 1 && (routePolyline.length - 1) % 10 !== 0) {
+                simplifiedPolyline.push(routePolyline[routePolyline.length - 1]);
+            }
+            const waypoints = simplifiedPolyline.map(p => `${p[0]},${p[1]}`).join(',');
+    
+            const query = `
+              [out:json][timeout:25];
+              (
+                node(around:150, ${waypoints})["highway"="bus_stop"];
+                way(around:150, ${waypoints})["highway"="bus_stop"];
+                node(around:150, ${waypoints})["public_transport"="platform"]["bus"="yes"];
+                way(around:150, ${waypoints})["public_transport"="platform"]["bus"="yes"];
+              );
+              out center;
+            `;
+    
+            const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`;
+    
+            fetch(url, { signal })
+                .then(response => response.ok ? response.json() : Promise.reject(new Error(response.statusText || `HTTP error ${response.status}`)))
+                .then(data => {
+                    const stops = data.elements.map(el => {
+                        const pos = el.type === 'node' ? [el.lat, el.lon] : [el.center.lat, el.center.lon];
+                        return {
+                            id: el.id,
+                            position: pos,
+                            tags: el.tags,
+                        };
+                    });
+                    const uniqueStops = Array.from(new Map(stops.map(s => [s.id, s])).values());
+                    setBusStops(uniqueStops);
+                    setStatus('success');
+                })
+                .catch(error => {
+                    if (error.name !== 'AbortError') {
+                        console.error("Lỗi khi fetch trạm xe buýt từ Overpass API:", error);
+                        setStatus('error');
+                    }
+                });
+    
+            return () => {
+                controller.abort();
+            };
+        }
+        
+        const abortCallback = fetchData();
+        return abortCallback;
+
+    }, [routePolyline, isVisible, retryId]);
+
+    const handleRetry = () => {
+      setRetryId(id => id + 1); // Increment retryId to trigger the useEffect
+    }
+
     if (!isVisible) return null;
+    
+    // UI for loading status
+    if (status === 'loading') {
+        return (
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-[1000] bg-white/80 backdrop-blur-sm rounded-lg shadow-md px-4 py-2 text-sm text-gray-700 flex items-center animate-pulse">
+                <svg className="animate-spin h-5 w-5 text-blue-500 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                Đang tải trạm dừng...
+            </div>
+        );
+    }
+    
+    // UI for error status
+    if (status === 'error') {
+        return (
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-[1000] bg-red-50/80 backdrop-blur-sm rounded-lg shadow-md px-4 py-2 text-sm text-red-700 flex items-center">
+                ⚠️ Tải trạm dừng thất bại.
+                <button onClick={handleRetry} className="ml-3 px-3 py-1 bg-red-500 text-white rounded-md hover:bg-red-600 font-semibold text-xs transition-all">
+                  Thử lại
+                </button>
+            </div>
+        );
+    }
+
+    // UI for success but no stops found
+    if (status === 'success' && busStops.length === 0) {
+         return (
+             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-[1000] bg-white/80 backdrop-blur-sm rounded-lg shadow-md px-4 py-2 text-sm text-gray-700">
+                ℹ️ Không tìm thấy trạm xe buýt nào trên tuyến đường này.
+             </div>
+         );
+    }
   
     return (
       <>

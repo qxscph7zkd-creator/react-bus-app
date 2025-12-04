@@ -1,26 +1,10 @@
 import { useMemo, useState } from "react";
 import "./BaoCaoDonTra.css";
+import { students, drivers, routeNames, CLASSES } from "../data/seed";
 
 /** ================== MOCK DATA GENERATOR ================== */
-const ROUTE_NAMES = [
-  "Tuyến 1: Quận 1 – Quận 5",
-  "Tuyến 2: Quận 7 – TP. Thủ Đức",
-  "Tuyến 3: Quận 3 – Bình Thạnh",
-  "Tuyến 4: Gò Vấp – Tân Bình",
-  "Tuyến 5: Bình Chánh – Quận 10",
-  "Tuyến 6: Quận 9 – Quận 2 – Quận 1",
-  "Tuyến 7: Quận 11 – Quận 6",
-  "Tuyến 8: Quận 4 – Quận 8",
-  "Tuyến 9: Quận 12 – Tân Bình",
-  "Tuyến 10: Tân Phú – Bình Tân",
-];
-
-const DRIVERS = [
-  "Trần Ngọc Bảo Hân", "Lê Tấn Nhật Minh", "Nguyễn Văn An", "Phạm Quang Huy",
-  "Hoàng Thùy Linh", "Đỗ Minh Khoa", "Ngô Bá Khánh", "Bùi Thanh Tâm",
-];
-
 const STOPS = ["Cổng trường", "Cổng sau", "Nhà thiếu nhi", "Chung cư A", "Chung cư B", "UBND phường"];
+const SAMPLE_PHONES = ["0901234567", "0902345678", "0903456789", "0904567890", "0912345678"];
 
 function seededRand(seed) {
   let x = Math.sin(seed) * 10000;
@@ -28,20 +12,27 @@ function seededRand(seed) {
 }
 
 function makeDashboard(dateSeed) {
-  // Step 0: Assign drivers to routes
-  const routeDriverMap = ROUTE_NAMES.reduce((map, routeName, idx) => {
-    map[routeName] = DRIVERS[idx % DRIVERS.length];
+  // Step 0: Filter active drivers and then assign them to routes
+  const activeDrivers = drivers.filter(d => d.status !== "Tạm dừng" && d.status !== "Nghỉ phép");
+  const routeDriverMap = routeNames.reduce((map, routeName, idx) => {
+    // Now that drivers is an array of objects, we need to get the name
+    map[routeName] = activeDrivers[idx % activeDrivers.length].name;
     return map;
   }, {});
 
-  // Step 1: Initialize routeStats
-  let routeStats = ROUTE_NAMES.map((name, idx) => {
-    const base = Math.floor(20 + seededRand(dateSeed + idx) * 16); // 20-35 students
-    return {
-      id: idx + 1, name, total: base, picked: 0, late: 0, absent: 0,
-      pending: 0, onTimeRate: 0, avgDelay: 0, totalMinutes: 0,
-    };
-  });
+  // Step 1: Initialize routeStats with REAL student counts
+  const studentCountsByRoute = students.reduce((counts, student) => {
+    counts[student.route] = (counts[student.route] || 0) + 1;
+    return counts;
+  }, {});
+
+  let routeStats = routeNames.map((name, idx) => ({
+    id: idx + 1,
+    name,
+    total: studentCountsByRoute[name] || 0, // Use the real count
+    picked: 0, late: 0, absent: 0,
+    pending: 0, onTimeRate: 0, avgDelay: 0, totalMinutes: 0,
+  }));
 
   // Step 2: Generate detailed incident lists
   const notPicked = [];
@@ -49,14 +40,16 @@ function makeDashboard(dateSeed) {
 
   // Generate "Đi muộn" list
   for (let i = 0; i < 16; i++) {
-    const rIndex = Math.floor(seededRand(dateSeed + 60 + i) * routeStats.length);
-    const r = routeStats[rIndex];
+    const student = students[Math.floor(seededRand(dateSeed + 60 + i) * students.length)];
+    const r = routeStats.find(rs => rs.name === student.route);
+    if (!r) continue;
+
     lateList.push({
       id: `LT${String(i + 1).padStart(3, "0")}`,
-      student: SAMPLE_STUDENTS[(i * 4 + 1) % SAMPLE_STUDENTS.length],
-      route: r.name,
+      student: student.name,
+      route: student.route,
       stop: STOPS[(i + 1) % STOPS.length],
-      driver: routeDriverMap[r.name],
+      driver: routeDriverMap[student.route],
       minutes: 2 + Math.floor(seededRand(i + dateSeed) * 11), // 2-12 mins
     });
   }
@@ -64,15 +57,17 @@ function makeDashboard(dateSeed) {
   // Generate "Chưa đón / chưa trả" list with all 4 reasons
   const NOT_PICKED_REASONS = ["Vắng mặt", "Chờ phụ huynh", "Không liên lạc được", "Thay đổi đột xuất"];
   for (let i = 0; i < 14; i++) {
-    const rIndex = Math.floor(seededRand(dateSeed + 30 + i) * routeStats.length);
-    const r = routeStats[rIndex];
+    const student = students[Math.floor(seededRand(dateSeed + 30 + i) * students.length)];
+    const r = routeStats.find(rs => rs.name === student.route);
+    if (!r) continue;
+
     notPicked.push({
       id: `NP${String(i + 1).padStart(3, "0")}`,
-      student: SAMPLE_STUDENTS[(i * 3) % SAMPLE_STUDENTS.length],
-      classRoom: SAMPLE_CLASSES[i % SAMPLE_CLASSES.length],
-      route: r.name,
+      student: student.name,
+      classRoom: student.class,
+      route: student.route,
       stop: STOPS[i % STOPS.length],
-      driver: routeDriverMap[r.name],
+      driver: routeDriverMap[student.route],
       phone: SAMPLE_PHONES[i % SAMPLE_PHONES.length],
       reason: NOT_PICKED_REASONS[i % NOT_PICKED_REASONS.length],
     });
@@ -118,9 +113,10 @@ function makeDashboard(dateSeed) {
   const avgOnTime = totalPicked > 0 ? (weightedOnTimeSum / totalPicked) * 100 : 100;
 
   // Step 6: Generate ACCURATE driver performance
-  const driverData = DRIVERS.reduce((acc, name) => ({
-    ...acc, [name]: { name, routes: new Set(), students: 0, late: 0, incidents: 0 },
-  }), {});
+  const driverData = activeDrivers.reduce((acc, driver) => {
+    acc[driver.name] = { name: driver.name, routes: new Set(), students: 0, late: 0, incidents: 0 };
+    return acc;
+  }, {});
 
   routeStats.forEach(r => {
     const driverName = routeDriverMap[r.name];
@@ -156,18 +152,6 @@ function makeDashboard(dateSeed) {
     kpi: { totalStudents, totalPicked, totalLate, totalAbsent, totalPending, avgOnTime },
   };
 }
-
-// A smaller, more focused sample data set for clarity
-const SAMPLE_STUDENTS = [
-  "Nguyễn Minh An", "Trần Gia Bảo", "Phạm Thị Cẩm Tiên", "Lê Quang Huy", "Đỗ Gia Khánh",
-  "Nguyễn Hoàng Lan", "Trương Minh Khang", "Võ Thanh Trúc", "Phan Bảo Anh", "Ngô Minh Tâm",
-  "Bùi Thu Hà", "Đặng Hoàng Phúc", "Huỳnh Kim Ngân", "Mai Thành Đạt", "Dương Bảo Trân",
-  "Nguyễn Phương Uyên", "Võ Hoàng Nam", "Lê Khánh Linh", "Trần Ngọc Bảo Hân", "Vũ Minh Trí",
-  "Phạm Tuấn Kiệt", "Đoàn Gia Hân", "Lê Thành Long", "Nguyễn Quỳnh Như", "Hồ Bích Phương",
-  "Phan Hoàng Phúc", "Đỗ Minh Châu", "Trương Gia Bảo", "Nguyễn Tuấn Minh", "Lý Khánh Vy",
-];
-const SAMPLE_CLASSES = ["1A", "1B", "2A", "2B", "3A", "3B", "4A", "4B", "5A", "5B", "5C"];
-const SAMPLE_PHONES = ["0901234567", "0902345678", "0903456789", "0904567890", "0912345678"];
 
 /** ================== COMPONENT ================== */
 
