@@ -76,6 +76,28 @@ const mappinIconSVG = renderToStaticMarkup(<svg xmlns="http://www.w3.org/2000/sv
 );
 const mappinIcon = createDivIcon(mappinIconSVG);
 
+// Icon trạm xe buýt
+const busStopIconSVG = renderToStaticMarkup(
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="28" height="28">
+      <defs>
+        <filter id="busStopShadow" x="-50%" y="-50%" width="200%" height="200%">
+          <feDropShadow dx="0" dy="1" stdDeviation="1" floodColor="#000000" floodOpacity="0.2"/>
+        </filter>
+      </defs>
+      <g filter="url(#busStopShadow)">
+        <rect x="3" y="2" width="18" height="12" rx="2" fill="#2563EB" stroke="#FFFFFF" stroke-width="1.5"/>
+        <path fill="#FFFFFF" d="M7 5h10v6H7z"/>
+        <path fill="#2563EB" d="M8 6h2v4H8zm3 0h2v4h-2zm3 0h2v4h-2z"/>
+        <circle cx="8.5" cy="13" r="1.5" fill="#333"/>
+        <circle cx="15.5" cy="13" r="1.5" fill="#333"/>
+        <rect x="11" y="14" width="2" height="8" fill="#6B7280" />
+        <rect x="9" y="21" width="6" height="1" fill="#6B7280" />
+      </g>
+    </svg>
+  );
+const busStopIcon = createDivIcon(busStopIconSVG);
+
+
 // Icon điểm dừng trung gian
 const stopIconSVG = renderToStaticMarkup(
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20">
@@ -291,6 +313,82 @@ const getTrafficAdjustedDuration = (baseDuration) => {
   return baseDuration * trafficMultiplier;
 };
 
+// Component để tìm và hiển thị các trạm xe buýt
+const BusStops = ({ routePolyline, isVisible }) => {
+    const [busStops, setBusStops] = useState([]);
+  
+    useEffect(() => {
+      if (!isVisible || !routePolyline || routePolyline.length < 2) {
+        setBusStops([]);
+        return;
+      }
+  
+      const controller = new AbortController();
+      const signal = controller.signal;
+  
+      // Để tránh URL quá dài, ta lấy mẫu một số điểm trên tuyến đường
+      const simplifiedPolyline = routePolyline.filter((_, i) => i % 10 === 0);
+      if (routePolyline.length > 1 && (routePolyline.length - 1) % 10 !== 0) {
+        simplifiedPolyline.push(routePolyline[routePolyline.length-1]);
+      }
+      const waypoints = simplifiedPolyline.map(p => `${p[0]},${p[1]}`).join(',');
+  
+      // Query Overpass API để tìm trạm xe buýt gần các điểm đã chọn
+      const query = `
+        [out:json][timeout:30];
+        (
+          node(around:50, ${waypoints})["highway"="bus_stop"];
+          way(around:50, ${waypoints})["highway"="bus_stop"];
+          node(around:50, ${waypoints})["public_transport"="platform"]["bus"="yes"];
+          way(around:50, ${waypoints})["public_transport"="platform"]["bus"="yes"];
+        );
+        out center;
+      `;
+  
+      const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`;
+  
+      fetch(url, { signal })
+        .then(response => response.json())
+        .then(data => {
+            const stops = data.elements.map(el => {
+                const pos = el.type === 'node' ? [el.lat, el.lon] : [el.center.lat, el.center.lon];
+                return {
+                  id: el.id,
+                  position: pos,
+                  tags: el.tags,
+                };
+              });
+              // Lọc các trạm trùng lặp
+              const uniqueStops = Array.from(new Map(stops.map(s => [s.id, s])).values());
+              setBusStops(uniqueStops);
+        })
+        .catch(error => {
+          if (error.name !== 'AbortError') {
+            console.error("Lỗi khi fetch trạm xe buýt từ Overpass API:", error);
+          }
+        });
+  
+      return () => {
+        controller.abort();
+      };
+    }, [routePolyline, isVisible]);
+  
+    if (!isVisible) return null;
+  
+    return (
+      <>
+        {busStops.map(stop => (
+          <Marker key={stop.id} position={stop.position} icon={busStopIcon}>
+            <Popup>
+              <b>Trạm xe buýt</b><br />
+              {stop.tags?.name || 'Không có tên'}
+            </Popup>
+          </Marker>
+        ))}
+      </>
+    );
+  };
+
 const TuyenDuongList = () => {
   const [selected, setSelected] = useState(null);
   const [showAll, setShowAll] = useState(false);
@@ -358,6 +456,7 @@ const TuyenDuongList = () => {
             {(animationStatus === 'playing' || animationStatus === 'paused') && route.length > 0 && (
               <AnimatedBusMarker key={replayId} positions={route} status={animationStatus} onFinish={handleAnimationFinish} onProgress={handleAnimationProgress} />
             )}
+            <BusStops routePolyline={route} isVisible={status === 'success'} />
             <Polyline positions={selected.toaDo} opacity={0}><Popup>{selected.ten}</Popup></Polyline>
             {selected.toaDo.map((pos, i) => (
               <Marker key={i} position={pos} icon={i === 0 ? flagIcon : i === selected.toaDo.length - 1 ? mappinIcon : stopIcon}>
