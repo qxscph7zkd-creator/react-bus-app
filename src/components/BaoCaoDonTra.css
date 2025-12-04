@@ -72,7 +72,7 @@
 /* KPI cards */
 .kpis {
     display: grid;
-    grid-template-columns: repeat(5, minmax(140px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
     gap: 10px;
     margin-bottom: 12px;
 }
@@ -260,4 +260,111 @@
     font-size: 12.5px;
     color: #6b7280;
     margin-top: 8px;
+}
+
+/* Print-specific styles */
+@media print {
+    body {
+        font-family: Arial, sans-serif; /* Standard font for printing */
+        font-size: 10pt;
+        color: #000;
+    }
+
+    /* Hide header, footer, toolbar and other interactive elements */
+    .ssbh, .ssb-footer, .toolbar, .hint {
+        display: none;
+    }
+
+    /* Reset layout for linear printing */
+    .report, .section, .kpis, .grid2, .routes-summary {
+        display: block;
+        margin: 0;
+        padding: 0;
+    }
+    
+    .section {
+        margin-top: 20px;
+    }
+
+    /* Style KPI cards for print */
+    .kpis {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0;
+        border-bottom: 1px solid #ccc;
+        padding-bottom: 10px;
+    }
+    .kpi {
+        border: none;
+        background: none;
+        padding: 5px;
+        flex: 1 1 120px; /* Allow them to flex and wrap */
+    }
+    .kpi-value {
+        font-size: 16px;
+    }
+
+    /* Style route cards for print */
+    .route-card, .table-wrap {
+        border: 1px solid #ccc;
+        background: #fff;
+        page-break-inside: avoid; /* Try to keep cards and tables from splitting across pages */
+        margin-top: 10px;
+    }
+
+    .progress {
+        border: 1px solid #ccc;
+        background: #fff;
+    }
+
+    .progress .bar {
+        background: #ddd !important; /* Use solid color for print */
+    }
+    
+    /* Ensure tables take full width and print cleanly */
+    .table-wrap {
+        overflow: visible;
+        border-radius: 0;
+    }
+    .tbl {
+        width: 100%;
+        font-size: 9pt;
+    }
+    .tbl th, .tbl td {
+        padding: 6px 8px;
+    }
+    .tbl thead th {
+        background: #eee !important;
+        -webkit-print-color-adjust: exact; /* Force background color printing */
+        print-color-adjust: exact;
+    }
+    .row-warn {
+        background: #fef3c7 !important; /* Lighter orange for print */
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    /* Remove link styles */
+    .tel, .tel:hover {
+        color: #000;
+        text-decoration: none;
+    }
+
+    /* Add a title for the printed report */
+    .report::before {
+        content: "Báo Cáo Đón Trả Học Sinh - Ngày: " attr(data-date);
+        display: block;
+        font-size: 16pt;
+        font-weight: bold;
+        margin-bottom: 20px;
+        text-align: center;
+    }
+
+    /* Hide the original on-screen title which is part of the normal flow */
+    .section-title {
+        font-size: 12pt;
+        border-bottom: 1px solid #000;
+        padding-bottom: 4px;
+        margin-bottom: 10px;
+    }
 }

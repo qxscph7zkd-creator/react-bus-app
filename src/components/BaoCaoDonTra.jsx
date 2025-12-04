@@ -2,7 +2,6 @@ import { useMemo, useState } from "react";
 import "./BaoCaoDonTra.css";
 
 /** ================== MOCK DATA GENERATOR ================== */
-// 10 tuyến mẫu (bạn có thể đổi sang 50 nếu muốn)
 const ROUTE_NAMES = [
   "Tuyến 1: Quận 1 – Quận 5",
   "Tuyến 2: Quận 7 – TP. Thủ Đức",
@@ -17,116 +16,148 @@ const ROUTE_NAMES = [
 ];
 
 const DRIVERS = [
-  "Trần Ngọc Bảo Hân",
-  "Lê Tấn Nhật Minh",
-  "Nguyễn Văn An",
-  "Phạm Quang Huy",
-  "Hoàng Thùy Linh",
-  "Đỗ Minh Khoa",
-  "Ngô Bá Khánh",
-  "Bùi Thanh Tâm",
+  "Trần Ngọc Bảo Hân", "Lê Tấn Nhật Minh", "Nguyễn Văn An", "Phạm Quang Huy",
+  "Hoàng Thùy Linh", "Đỗ Minh Khoa", "Ngô Bá Khánh", "Bùi Thanh Tâm",
 ];
 
 const STOPS = ["Cổng trường", "Cổng sau", "Nhà thiếu nhi", "Chung cư A", "Chung cư B", "UBND phường"];
 
 function seededRand(seed) {
-  // pseudo random stable theo seed (để giao diện nhất quán mỗi lần chọn ngày)
   let x = Math.sin(seed) * 10000;
   return x - Math.floor(x);
 }
 
-function makeDashboard(dateSeed, selectedShift) {
-  // Tạo số liệu tổng hợp cho 10 tuyến
-  const routeStats = ROUTE_NAMES.map((name, idx) => {
-    const base = Math.floor(20 + seededRand(dateSeed + idx) * 16); // 20..35 HS
-    const absent = Math.floor(seededRand(dateSeed * (idx + 2)) * 3); // 0..2
-    const late = Math.floor(seededRand(dateSeed + idx * 7) * 4); // 0..3
-    const pending = selectedShift === "all" ? Math.floor(seededRand(dateSeed + idx * 11) * 2) : 0; // ca all có thể còn pending
-    const picked = Math.max(0, base - absent - pending);
-    const onTimeRate = Math.max(0, Math.min(1, 0.82 + seededRand(idx + dateSeed) * 0.16)); // 82%..98%
-    const avgDelay = Math.floor(seededRand(dateSeed - idx) * 7); // 0..6 phút
+function makeDashboard(dateSeed) {
+  // Step 0: Assign drivers to routes
+  const routeDriverMap = ROUTE_NAMES.reduce((map, routeName, idx) => {
+    map[routeName] = DRIVERS[idx % DRIVERS.length];
+    return map;
+  }, {});
+
+  // Step 1: Initialize routeStats
+  let routeStats = ROUTE_NAMES.map((name, idx) => {
+    const base = Math.floor(20 + seededRand(dateSeed + idx) * 16); // 20-35 students
     return {
-      id: idx + 1,
-      name,
-      total: base,
-      picked,
-      late,
-      absent,
-      pending,
-      onTimeRate,
-      avgDelay,
+      id: idx + 1, name, total: base, picked: 0, late: 0, absent: 0,
+      pending: 0, onTimeRate: 0, avgDelay: 0, totalMinutes: 0,
     };
   });
 
-  // Tạo danh sách incident (chưa đón/chưa trả + đi muộn)
+  // Step 2: Generate detailed incident lists
   const notPicked = [];
   const lateList = [];
-  for (let i = 0; i < 14; i++) {
-    const rIndex = Math.floor(seededRand(dateSeed + 30 + i) * routeStats.length);
-    const r = routeStats[rIndex];
-    const driver = DRIVERS[rIndex % DRIVERS.length];
-    const name = SAMPLE_STUDENTS[(i * 3) % SAMPLE_STUDENTS.length];
-    notPicked.push({
-      id: `NP${String(i + 1).padStart(3, "0")}`,
-      student: name,
-      classRoom: SAMPLE_CLASSES[i % SAMPLE_CLASSES.length],
-      route: r.name,
-      stop: STOPS[i % STOPS.length],
-      driver,
-      phone: SAMPLE_PHONES[i % SAMPLE_PHONES.length],
-      reason: ["Vắng mặt", "Thay đổi đột xuất", "Không liên lạc được", "Chờ phụ huynh"][i % 4],
-    });
-  }
+
+  // Generate "Đi muộn" list
   for (let i = 0; i < 16; i++) {
     const rIndex = Math.floor(seededRand(dateSeed + 60 + i) * routeStats.length);
     const r = routeStats[rIndex];
-    const driver = DRIVERS[(rIndex + 2) % DRIVERS.length];
-    const name = SAMPLE_STUDENTS[(i * 4 + 1) % SAMPLE_STUDENTS.length];
     lateList.push({
       id: `LT${String(i + 1).padStart(3, "0")}`,
-      student: name,
+      student: SAMPLE_STUDENTS[(i * 4 + 1) % SAMPLE_STUDENTS.length],
       route: r.name,
       stop: STOPS[(i + 1) % STOPS.length],
-      driver,
-      minutes: 2 + Math.floor(seededRand(i + dateSeed) * 11), // 2..12
+      driver: routeDriverMap[r.name],
+      minutes: 2 + Math.floor(seededRand(i + dateSeed) * 11), // 2-12 mins
     });
   }
 
-  // Tổng hợp KPI
+  // Generate "Chưa đón / chưa trả" list with all 4 reasons
+  const NOT_PICKED_REASONS = ["Vắng mặt", "Chờ phụ huynh", "Không liên lạc được", "Thay đổi đột xuất"];
+  for (let i = 0; i < 14; i++) {
+    const rIndex = Math.floor(seededRand(dateSeed + 30 + i) * routeStats.length);
+    const r = routeStats[rIndex];
+    notPicked.push({
+      id: `NP${String(i + 1).padStart(3, "0")}`,
+      student: SAMPLE_STUDENTS[(i * 3) % SAMPLE_STUDENTS.length],
+      classRoom: SAMPLE_CLASSES[i % SAMPLE_CLASSES.length],
+      route: r.name,
+      stop: STOPS[i % STOPS.length],
+      driver: routeDriverMap[r.name],
+      phone: SAMPLE_PHONES[i % SAMPLE_PHONES.length],
+      reason: NOT_PICKED_REASONS[i % NOT_PICKED_REASONS.length],
+    });
+  }
+
+  // Step 3: Tally up stats
+  lateList.forEach(item => {
+    const route = routeStats.find(r => r.name === item.route);
+    if (route) {
+      route.late++;
+      route.totalMinutes += item.minutes;
+    }
+  });
+
+  notPicked.forEach(item => {
+    const route = routeStats.find(r => r.name === item.route);
+    if (route) {
+      if (item.reason === "Chờ phụ huynh") {
+        route.pending++;
+      } else {
+        route.absent++;
+      }
+    }
+  });
+
+  // Step 4: Finalize route stats
+  routeStats = routeStats.map(r => {
+    const picked = Math.max(0, r.total - r.absent - r.pending);
+    const onTimeRate = picked > 0 ? Math.max(0, (picked - r.late) / picked) : 1;
+    const avgDelay = r.late > 0 ? r.totalMinutes / r.late : 0;
+    const finalRoute = { ...r, picked, onTimeRate, avgDelay };
+    delete finalRoute.totalMinutes;
+    return finalRoute;
+  });
+
+  // Step 5: Calculate overall KPIs
   const totalStudents = routeStats.reduce((s, r) => s + r.total, 0);
   const totalPicked = routeStats.reduce((s, r) => s + r.picked, 0);
   const totalLate = routeStats.reduce((s, r) => s + r.late, 0);
   const totalAbsent = routeStats.reduce((s, r) => s + r.absent, 0);
-  const avgOnTime = Math.round(
-    (routeStats.reduce((s, r) => s + r.onTimeRate, 0) / routeStats.length) * 100
-  );
+  const totalPending = routeStats.reduce((s, r) => s + r.pending, 0);
+  const weightedOnTimeSum = routeStats.reduce((s, r) => s + r.onTimeRate * r.picked, 0);
+  const avgOnTime = totalPicked > 0 ? (weightedOnTimeSum / totalPicked) * 100 : 100;
 
-  // Hiệu suất tài xế
-  const driverPerf = DRIVERS.map((name, i) => {
-    const trips = 2 + Math.floor(seededRand(dateSeed * (i + 1)) * 4); // 2..5
-    const students = 25 + Math.floor(seededRand(dateSeed + i) * 30); // 25..55
-    const late = Math.floor(seededRand(dateSeed - i) * 6); // 0..5
-    const incidents = Math.floor(seededRand(dateSeed + 9 * i) * 3); // 0..2
-    const onTime = Math.max(80, 98 - late * 3); // 80..98%
-    return { name, trips, students, late, incidents, onTime };
+  // Step 6: Generate ACCURATE driver performance
+  const driverData = DRIVERS.reduce((acc, name) => ({
+    ...acc, [name]: { name, routes: new Set(), students: 0, late: 0, incidents: 0 },
+  }), {});
+
+  routeStats.forEach(r => {
+    const driverName = routeDriverMap[r.name];
+    if (driverData[driverName]) {
+      driverData[driverName].routes.add(r.name);
+      driverData[driverName].students += r.picked;
+    }
   });
 
+  lateList.forEach(item => {
+    if (driverData[item.driver]) driverData[item.driver].late++;
+  });
+
+  notPicked.forEach(item => {
+    // "Sự cố" (incident) is now more specific - e.g., only when driver cannot contact parent
+    if (driverData[item.driver] && item.reason === "Không liên lạc được") {
+      driverData[item.driver].incidents++;
+    }
+  });
+
+  const driverPerf = Object.values(driverData)
+    .map(perf => ({
+      ...perf,
+      routes: Array.from(perf.routes), // Keep as array of strings
+      trips: perf.routes.size,
+      onTime: perf.students > 0 ? ((perf.students - perf.late) / perf.students) * 100 : 100,
+    }))
+    .filter(p => p.trips > 0);
+
+  // Step 7: Return all data
   return {
-    routeStats,
-    notPicked,
-    lateList,
-    kpi: {
-      totalStudents,
-      totalPicked,
-      totalLate,
-      totalAbsent,
-      avgOnTime,
-    },
-    driverPerf,
+    routeStats, notPicked, lateList, driverPerf,
+    kpi: { totalStudents, totalPicked, totalLate, totalAbsent, totalPending, avgOnTime },
   };
 }
 
-// Một ít dữ liệu tên/điện thoại/lớp để random hiển thị
+// A smaller, more focused sample data set for clarity
 const SAMPLE_STUDENTS = [
   "Nguyễn Minh An", "Trần Gia Bảo", "Phạm Thị Cẩm Tiên", "Lê Quang Huy", "Đỗ Gia Khánh",
   "Nguyễn Hoàng Lan", "Trương Minh Khang", "Võ Thanh Trúc", "Phan Bảo Anh", "Ngô Minh Tâm",
@@ -134,31 +165,34 @@ const SAMPLE_STUDENTS = [
   "Nguyễn Phương Uyên", "Võ Hoàng Nam", "Lê Khánh Linh", "Trần Ngọc Bảo Hân", "Vũ Minh Trí",
   "Phạm Tuấn Kiệt", "Đoàn Gia Hân", "Lê Thành Long", "Nguyễn Quỳnh Như", "Hồ Bích Phương",
   "Phan Hoàng Phúc", "Đỗ Minh Châu", "Trương Gia Bảo", "Nguyễn Tuấn Minh", "Lý Khánh Vy",
-  "Tạ Thanh Thảo", "Nguyễn Bảo Ngọc", "Phạm Đức Thịnh", "Võ Nhật Huy", "Trần Thành Tùng",
-  "Nguyễn Khánh An", "Bùi Hoàng Anh", "Phạm Mai Phương", "Lê Tuấn Kiệt", "Nguyễn Thảo My",
 ];
-const SAMPLE_CLASSES = ["1A", "1B", "1C", "2A", "2B", "2C", "3A", "3B", "3C", "4A", "4B", "4C", "5A", "5B", "5C", "5D"];
-const SAMPLE_PHONES = ["0901234567", "0902345678", "0903456789", "0904567890", "0912345678", "0913456789", "0938123456", "0978123456"];
+const SAMPLE_CLASSES = ["1A", "1B", "2A", "2B", "3A", "3B", "4A", "4B", "5A", "5B", "5C"];
+const SAMPLE_PHONES = ["0901234567", "0902345678", "0903456789", "0904567890", "0912345678"];
 
 /** ================== COMPONENT ================== */
 
 export default function BaoCaoDonTra() {
-  const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
-  const [shift, setShift] = useState("morning"); // morning | afternoon | all
+  const today = new Date().toISOString().slice(0, 10);
+  const [date, setDate] = useState(() => today);
+  const [shift, setShift] = useState("morning");
   const [routeFilter, setRouteFilter] = useState("Tất cả");
   const [q, setQ] = useState("");
 
   const seed = useMemo(() => {
-    // seed theo yyyy-mm-dd + shift
+    // Re-seed based on date and shift to ensure data changes on selection
     const s = Number(date.replaceAll("-", "")) + (shift === "morning" ? 1 : shift === "afternoon" ? 2 : 3);
     return s;
   }, [date, shift]);
 
-  const data = useMemo(() => makeDashboard(seed, shift), [seed, shift]);
+  const data = useMemo(() => makeDashboard(seed), [seed]);
+  
+  // Prevent rendering data for future dates
+  const isFuture = date > today;
 
   const routeOptions = useMemo(() => ["Tất cả", ...data.routeStats.map(r => r.name)], [data.routeStats]);
 
   const filteredNotPicked = useMemo(() => {
+    if (!data.notPicked) return [];
     return data.notPicked.filter(row => {
       const okR = routeFilter === "Tất cả" || row.route === routeFilter;
       const s = q.trim().toLowerCase();
@@ -168,6 +202,7 @@ export default function BaoCaoDonTra() {
   }, [data.notPicked, routeFilter, q]);
 
   const filteredLate = useMemo(() => {
+    if (!data.lateList) return [];
     return data.lateList.filter(row => {
       const okR = routeFilter === "Tất cả" || row.route === routeFilter;
       const s = q.trim().toLowerCase();
@@ -177,33 +212,35 @@ export default function BaoCaoDonTra() {
   }, [data.lateList, routeFilter, q]);
 
   const exportCSV = () => {
+    const universalBOM = "\uFEFF";
     const head1 = "ID,Student,Class,Route,Stop,Driver,Phone,Reason";
-    const body1 = filteredNotPicked
-      .map(r => [r.id, r.student, r.classRoom, r.route, r.stop, r.driver, r.phone, r.reason].join(","))
-      .join("\n");
-
+    const body1 = filteredNotPicked.map(r => [r.id, r.student, r.classRoom, r.route, r.stop, r.driver, r.phone, r.reason].join(",")).join("\n");
+    
     const head2 = "ID,Student,Route,Stop,Driver,MinutesLate";
-    const body2 = filteredLate
-      .map(r => [r.id, r.student, r.route, r.stop, r.driver, r.minutes].join(","))
-      .join("\n");
+    const body2 = filteredLate.map(r => [r.id, r.student, r.route, r.stop, r.driver, r.minutes].join(",")).join("\n");
 
-    const csv = `Chua don/tra\n${head1}\n${body1}\n\nDi muon\n${head2}\n${body2}`;
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url; a.download = `bao_cao_${date}.csv`; a.click();
-    URL.revokeObjectURL(url);
+    const title1 = "Báo cáo học sinh chưa đón / chưa trả";
+    const title2 = "Báo cáo học sinh đi muộn";
+
+    const csv = `${title1}\n${head1}\n${body1}\n\n${title2}\n${head2}\n${body2}`;
+    
+    const blob = new Blob([universalBOM + csv], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `bao_cao_don_tra_${date}.csv`;
+    link.click();
+    URL.revokeObjectURL(link.href);
   };
 
   const totalRoutesShown = routeFilter === "Tất cả" ? data.routeStats.length : 1;
 
   return (
-    <div className="report">
+    <div className="report" data-date={date}>
       {/* Filters */}
       <div className="toolbar">
         <div className="group">
           <label>Ngày</label>
-          <input type="date" value={date} onChange={e => (setQ(""), setRouteFilter("Tất cả"), setDate(e.target.value))} />
+          <input type="date" value={date} max={today} onChange={e => (setQ(""), setRouteFilter("Tất cả"), setDate(e.target.value))} />
         </div>
         <div className="group">
           <label>Ca</label>
@@ -220,164 +257,134 @@ export default function BaoCaoDonTra() {
           </select>
         </div>
         <div className="grow" />
-        <input
-          className="search"
-          placeholder="Tìm theo học sinh/tài xế…"
-          value={q}
-          onChange={e => setQ(e.target.value)}
-        />
+        <input className="search" placeholder="Tìm theo học sinh/tài xế…" value={q} onChange={e => setQ(e.target.value)} />
         <button className="btn" onClick={() => window.print()}>In báo cáo</button>
         <button className="btn primary" onClick={exportCSV}>Xuất CSV</button>
       </div>
+      
+      {isFuture ? (
+        <div className="section empty">Không có dữ liệu cho ngày tương lai. Vui lòng chọn ngày hiện tại hoặc quá khứ.</div>
+      ) : (
+        <>
+          {/* KPI CARDS */}
+          <div className="kpis">
+            <KPI title="Tổng số học sinh" value={data.kpi.totalStudents} />
+            <KPI title={`Đã đón (${(data.kpi.totalPicked / data.kpi.totalStudents * 100).toFixed(0)}%)`} value={`${data.kpi.totalPicked}/${data.kpi.totalStudents}`} />
+            <KPI title="Đi muộn (lượt)" value={data.kpi.totalLate} />
+            <KPI title="Vắng / Hủy" value={data.kpi.totalAbsent} />
+            <KPI title="Còn chờ" value={data.kpi.totalPending} />
+            <KPI title="Đúng giờ (TB %)" value={`${data.kpi.avgOnTime.toFixed(1)}%`} />
+          </div>
 
-      {/* KPI CARDS */}
-      <div className="kpis">
-        <KPI title="Tổng số học sinh" value={data.kpi.totalStudents} />
-        <KPI title={`Đã đón (${Math.round(data.kpi.totalPicked / data.kpi.totalStudents * 100)}%)`} value={`${data.kpi.totalPicked}/${data.kpi.totalStudents}`} />
-        <KPI title="Đi muộn (lượt)" value={data.kpi.totalLate} />
-        <KPI title="Vắng / Hủy" value={data.kpi.totalAbsent} />
-        <KPI title="Đúng giờ (TB %)" value={`${data.kpi.avgOnTime}%`} />
-      </div>
-
-      {/* ROUTE SUMMARY */}
-      <div className="section">
-        <div className="section-title">Tổng hợp theo tuyến ({totalRoutesShown})</div>
-        <div className="routes-summary">
-          {data.routeStats
-            .filter(r => routeFilter === "Tất cả" || r.name === routeFilter)
-            .map(r => {
-              const pct = Math.round((r.picked / r.total) * 100);
-              const warn = r.onTimeRate < 0.85 || r.pending > 0;
-              return (
-                <div key={r.id} className={`route-card ${warn ? "warn" : ""}`}>
-                  <div className="route-title">{r.name}</div>
-                  <div className="row">
-                    <div className="progress">
-                      <div className="bar" style={{ width: `${pct}%` }} />
+          {/* ROUTE SUMMARY */}
+          <div className="section">
+            <div className="section-title">Tổng hợp theo tuyến ({totalRoutesShown})</div>
+            <div className="routes-summary">
+              {data.routeStats
+                .filter(r => routeFilter === "Tất cả" || r.name === routeFilter)
+                .map(r => {
+                  const pct = r.total > 0 ? (r.picked / r.total) * 100 : 0;
+                  // The orange warning color indicates a low on-time rate or if students are waiting
+                  const warn = r.onTimeRate < 0.85 || r.pending > 0;
+                  return (
+                    <div key={r.id} className={`route-card ${warn ? "warn" : ""}`}>
+                      <div className="route-title">{r.name}</div>
+                      <div className="row">
+                        <div className="progress"><div className="bar" style={{ width: `${pct}%` }} /></div>
+                        <div className="stat">{r.picked}/{r.total}</div>
+                      </div>
+                      <div className="meta">
+                        <span>Đúng giờ: <b>{(r.onTimeRate * 100).toFixed(1)}%</b></span>
+                        <span>Muộn: <b>{r.late}</b></span>
+                        <span>Còn chờ: <b>{r.pending}</b></span>
+                        <span>Vắng/Hủy: <b>{r.absent}</b></span>
+                        <span>Trễ TB: <b>{r.avgDelay.toFixed(1)}’</b></span>
+                      </div>
                     </div>
-                    <div className="stat">{r.picked}/{r.total}</div>
-                  </div>
-                  <div className="meta">
-                    <span>Đúng giờ: <b>{Math.round(r.onTimeRate * 100)}%</b></span>
-                    <span>Muộn: <b>{r.late}</b></span>
-                    <span>Còn chờ: <b>{r.pending}</b></span>
-                    <span>Vắng: <b>{r.absent}</b></span>
-                    <span>Trễ TB: <b>{r.avgDelay}’</b></span>
-                  </div>
-                </div>
-              );
-            })}
-        </div>
-      </div>
-
-      {/* EXCEPTIONS */}
-      <div className="section grid2">
-        <div>
-          <div className="section-title">Chưa đón / chưa trả</div>
-          <div className="table-wrap">
-            <table className="tbl">
-              <thead>
-                <tr>
-                  <th>Mã</th>
-                  <th>Học sinh</th>
-                  <th>Lớp</th>
-                  <th>Tuyến</th>
-                  <th>Điểm đón</th>
-                  <th>Tài xế</th>
-                  <th>Liên hệ</th>
-                  <th>Lý do</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredNotPicked.map(r => (
-                  <tr key={r.id} className="row-warn">
-                    <td>{r.id}</td>
-                    <td>{r.student}</td>
-                    <td>{r.classRoom}</td>
-                    <td>{r.route}</td>
-                    <td>{r.stop}</td>
-                    <td>{r.driver}</td>
-                    <td><a className="tel" href={`tel:${r.phone}`}>{r.phone}</a></td>
-                    <td>{r.reason}</td>
-                  </tr>
-                ))}
-                {filteredNotPicked.length === 0 && (
-                  <tr><td colSpan={8} className="empty">Không có dữ liệu phù hợp</td></tr>
-                )}
-              </tbody>
-            </table>
+                  );
+                })}
+            </div>
           </div>
-        </div>
 
-        <div>
-          <div className="section-title">Đi muộn</div>
-          <div className="table-wrap">
-            <table className="tbl">
-              <thead>
-                <tr>
-                  <th>Mã</th>
-                  <th>Học sinh</th>
-                  <th>Tuyến</th>
-                  <th>Điểm đón</th>
-                  <th>Tài xế</th>
-                  <th>Phút trễ</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredLate.map(r => (
-                  <tr key={r.id}>
-                    <td>{r.id}</td>
-                    <td>{r.student}</td>
-                    <td>{r.route}</td>
-                    <td>{r.stop}</td>
-                    <td>{r.driver}</td>
-                    <td><b>{r.minutes}’</b></td>
-                  </tr>
-                ))}
-                {filteredLate.length === 0 && (
-                  <tr><td colSpan={6} className="empty">Không có dữ liệu phù hợp</td></tr>
-                )}
-              </tbody>
-            </table>
+          {/* EXCEPTIONS */}
+          <div className="section grid2">
+            <div>
+              <div className="section-title">Chưa đón / chưa trả ({filteredNotPicked.length})</div>
+              <div className="table-wrap">
+                <table className="tbl">
+                  <thead>
+                    <tr>
+                      <th>Mã</th><th>Học sinh</th><th>Lớp</th><th>Tuyến</th>
+                      <th>Điểm đón</th><th>Tài xế</th><th>Liên hệ</th><th>Lý do</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredNotPicked.map(r => (
+                      <tr key={r.id} className="row-warn">
+                        <td>{r.id}</td><td>{r.student}</td><td>{r.classRoom}</td>
+                        <td>{r.route}</td><td>{r.stop}</td><td>{r.driver}</td>
+                        <td><a className="tel" href={`tel:${r.phone}`}>{r.phone}</a></td>
+                        <td>{r.reason}</td>
+                      </tr>
+                    ))}
+                    {filteredNotPicked.length === 0 && (
+                      <tr><td colSpan={8} className="empty">Không có dữ liệu phù hợp</td></tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div>
+              <div className="section-title">Đi muộn ({filteredLate.length})</div>
+              <div className="table-wrap">
+                <table className="tbl">
+                  <thead><tr><th>Mã</th><th>Học sinh</th><th>Tuyến</th><th>Điểm đón</th><th>Tài xế</th><th>Phút trễ</th></tr></thead>
+                  <tbody>
+                    {filteredLate.map(r => (
+                      <tr key={r.id}>
+                        <td>{r.id}</td><td>{r.student}</td><td>{r.route}</td>
+                        <td>{r.stop}</td><td>{r.driver}</td><td><b>{r.minutes}’</b></td>
+                      </tr>
+                    ))}
+                    {filteredLate.length === 0 && <tr><td colSpan={6} className="empty">Không có dữ liệu phù hợp</td></tr>}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
 
-      {/* DRIVER PERFORMANCE */}
-      <div className="section">
-        <div className="section-title">Hiệu suất tài xế</div>
-        <div className="table-wrap">
-          <table className="tbl">
-            <thead>
-              <tr>
-                <th>Tài xế</th>
-                <th>Chuyến</th>
-                <th>Học sinh</th>
-                <th>Muộn</th>
-                <th>Sự cố</th>
-                <th>Đúng giờ</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.driverPerf.map(d => (
-                <tr key={d.name}>
-                  <td>{d.name}</td>
-                  <td>{d.trips}</td>
-                  <td>{d.students}</td>
-                  <td>{d.late}</td>
-                  <td>{d.incidents}</td>
-                  <td>
-                    <span className={`badge ${d.onTime >= 95 ? "ok" : d.onTime >= 88 ? "mid" : "low"}`}>
-                      {d.onTime}%
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <p className="hint">* Dữ liệu hiện là mô phỏng để trình bày giao diện. Khi nối API thật, thay khối sinh dữ liệu bằng dữ liệu server.</p>
-      </div>
+          {/* DRIVER PERFORMANCE */}
+          <div className="section">
+            <div className="section-title">Hiệu suất tài xế</div>
+            <div className="table-wrap">
+              <table className="tbl">
+                <thead>
+                  <tr>
+                    <th>Tài xế</th><th>Số tuyến</th><th>Các tuyến</th><th>Học sinh</th>
+                    <th>Muộn</th><th>Sự cố</th><th>Đúng giờ</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.driverPerf.map(d => (
+                    <tr key={d.name}>
+                      <td>{d.name}</td><td>{d.trips}</td>
+                      <td>{d.routes.map(r => r.split(':')[0]).join(', ')}</td>
+                      <td>{d.students}</td><td>{d.late}</td><td>{d.incidents}</td>
+                      <td>
+                        <span className={`badge ${d.onTime >= 95 ? "ok" : d.onTime >= 88 ? "mid" : "low"}`}>
+                          {d.onTime.toFixed(1)}%
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p className="hint">* Dữ liệu được mô phỏng để trình bày giao diện. Khi nối API, các tính toán này sẽ được thực hiện ở backend.</p>
+          </div>
+        </>
+      )}
     </div>
   );
 }
